@@ -14,6 +14,7 @@ export type BattleOrchestrationMode =
   | "deterministic"
   | "judge_only"
   | "hybrid";
+export type ArenaTopicSource = "preset" | "zhihu_dynamic";
 
 export type TopicPreset = {
   id: string;
@@ -23,6 +24,12 @@ export type TopicPreset = {
   stakes: string;
   proLabel: string;
   conLabel: string;
+  source?: ArenaTopicSource;
+  sourceMeta?: {
+    headline?: string;
+    publishedInHours?: number;
+    rankHint?: number;
+  } | null;
 };
 
 export type ChallengerPreset = {
@@ -87,6 +94,51 @@ export type SecondMeSoftMemory = {
   [key: string]: unknown;
 };
 
+export type OpenClawBindingInput = {
+  archetype?: string;
+  agentVersion?: string;
+  aura?: string;
+  avatarUrl?: string;
+  declaration: string;
+  displayId?: string;
+  displayName: string;
+  memoryAnchors: string[];
+  rule: string;
+  runtimeLabel?: string;
+  soulSeedTags: string[];
+  sourceFile?: string;
+  sourceKind?: "skill_push" | "workspace_import";
+  sourceLabel?: string;
+  taboo: string;
+  tags: string[];
+  viewpoints: string[];
+};
+
+export type OpenClawBindingRecord = {
+  id: string;
+  sessionId: string;
+  slot: ArenaParticipantSlot;
+  createdAt: string;
+  updatedAt: string;
+  version: string;
+  profile: OpenClawBindingInput & {
+    archetype: string;
+    aura: string;
+    runtimeLabel: string;
+    sourceKind: "skill_push" | "workspace_import";
+    sourceLabel: string;
+  };
+};
+
+export type OpenClawBindCodeRecord = {
+  code: string;
+  createdAt: string;
+  expiresAt: string;
+  sessionId: string;
+  slot: ArenaParticipantSlot;
+  usedAt: string | null;
+};
+
 export type ParticipantSessionSnapshot = {
   authenticated: boolean;
   expiresAt: number | null;
@@ -99,6 +151,9 @@ export type ArenaParticipantRef = {
 };
 
 export type ArenaParticipantSource = {
+  avatarUrl?: string | null;
+  displayId?: string | null;
+  participantId?: string;
   slot: ArenaParticipantSlot;
   provider: ParticipantProvider;
   connected: boolean;
@@ -109,14 +164,35 @@ export type ArenaParticipantSource = {
   shades: SecondMeShade[];
   softMemory: SecondMeSoftMemory[];
   issues: string[];
+  configVersion?: string | null;
+  runtimeReady?: boolean;
+  sourceLabel?: string | null;
+  sourceMeta?: Record<string, unknown> | null;
 };
 
 export type FighterSourceMeta = {
+  avatarUrl?: string | null;
   connected: boolean;
+  displayId?: string | null;
   participantId?: string;
   provider: ParticipantProvider;
   secondMeUserId?: string | null;
   slot: ArenaParticipantSlot;
+  configVersion?: string | null;
+  runtimeReady?: boolean;
+  sourceLabel?: string | null;
+};
+
+export type ArenaParticipantSnapshot = {
+  avatarUrl?: string | null;
+  displayId?: string | null;
+  slot: ArenaParticipantSlot;
+  provider: ParticipantProvider;
+  participantId?: string;
+  displayName: string;
+  configVersion?: string | null;
+  runtimeReady?: boolean;
+  sourceLabel?: string | null;
 };
 
 export type BattleSourceMeta = {
@@ -125,6 +201,10 @@ export type BattleSourceMeta = {
   generationMode: ArenaGenerationMode;
   issues: string[];
   orchestrationMode?: BattleOrchestrationMode;
+  participantSnapshots?: ArenaParticipantSnapshot[];
+  setupId?: string;
+  originBattleId?: string | null;
+  topicSource?: ArenaTopicSource;
 };
 
 export type FighterProfile = {
@@ -132,6 +212,7 @@ export type FighterProfile = {
   archetype: string;
   aura: string;
   buildSummary: string[];
+  buildInputSnapshot: FighterBuildInput;
   cards: BuildCard[];
   declaration: string;
   displayName: string;
@@ -156,9 +237,17 @@ export type ArenaBuildPreview = {
 };
 
 export type ArenaBattleSetup = {
+  setupId?: string;
+  originBattleId?: string | null;
   overrides?: Partial<Record<ArenaParticipantSlot, ParticipantBuildOverride>>;
   participants: ArenaParticipantRef[];
   topicId: string;
+  topicSnapshot?: TopicPreset;
+};
+
+export type BattleSetupRecord = ArenaBattleSetup & {
+  id: string;
+  createdAt: string;
 };
 
 export type BattleEventType =
@@ -290,10 +379,41 @@ export type BattleSummary = {
   defenderDisplayName: string;
   generationMode: ArenaGenerationMode;
   id: string;
+  originBattleId?: string | null;
+  participantProviders?: ParticipantProvider[];
   playerDisplayName: string;
   roomTitle: string;
+  setupId?: string;
   topicId: string;
+  topicSource?: ArenaTopicSource;
+  topicTitle?: string;
   winnerId: string;
+};
+
+export type AudienceMember = {
+  id: string;
+  sessionId: string;
+  displayName: string;
+  displayId: string | null;
+  avatarDataUrl: string | null;
+  createdAt: string;
+};
+
+export type LiveSession = {
+  sessionId: string;
+  battleId: string | null;
+  startAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type VoteSide = "player" | "defender";
+export type Vote = {
+  id: string;
+  sessionId: string;
+  battleId: string;
+  side: VoteSide;
+  createdAt: string;
 };
 
 export type BattlePackage = {
@@ -314,9 +434,11 @@ export type BattlePackage = {
   highlights: BattleHighlight[];
   id: string;
   judges: JudgeVerdict[];
+  originBattleId?: string | null;
   participantRefs: ArenaParticipantRef[];
   player: FighterProfile;
   roomTitle: string;
+  setupId?: string;
   sourceMeta: BattleSourceMeta;
   topic: TopicPreset;
   winnerId: string;

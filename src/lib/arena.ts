@@ -322,6 +322,7 @@ const toFighterProfile = (
     archetype,
     aura,
     buildSummary: summarizeBuild(cards, soul),
+    buildInputSnapshot: input,
     cards,
     declaration: input.declaration,
     displayName: input.displayName,
@@ -333,8 +334,11 @@ const toFighterProfile = (
     role,
     soul,
     source: {
+      configVersion: null,
       connected: false,
       provider: "secondme",
+      runtimeReady: false,
+      sourceLabel: "Classic Demo",
       slot: role === "challenger" ? "alpha" : "beta",
     },
   } satisfies FighterProfile;

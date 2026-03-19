@@ -67,3 +67,19 @@
 - 竞技层仍为无赛季的轻量版本
 - 只统计真实 `orchestrated` battle
 - 未加入任务系统、成就树与观众投票
+## 2026-03-18 P0
+
+### 已完成
+- `openclaw` provider 已从类型占位升级为真实接入路径
+- `/arena` 已支持 `SecondMe / OpenClaw` 双 provider 选择
+- OpenClaw 主流程已改为“一次性绑定码 + skill 主动注册”
+- `soul.md` 导入保留为 legacy fallback，不再是默认主流程
+- battle 创建前已新增 setup 持久化
+- replay 已支持 rematch 模板派生并返回 builder
+- `/api/arena/topics` 已支持 `preset + zhihu_dynamic` 混合题池
+- builder 已支持 participant override UI
+
+### 当前边界
+- openclaw runtime endpoint 仍为可选配置，未配置时自动走 fallback
+- rematch 当前优先支持“可编辑重开”，未做“一键原样再战”
+- 分享、观众投票、圈子互动仍未进入本轮

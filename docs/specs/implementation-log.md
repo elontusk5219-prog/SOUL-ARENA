@@ -85,3 +85,26 @@
 - Added leaderboard/profile APIs and a dedicated `/arena/leaderboard` page
 - Reworked `/`, `/arena`, `/arena/[battleId]`, and `/arena/history` around ranking, streaks, and next-challenge loops
 - Kept classic mock battles as teaching/demo content and excluded them from live ranking
+## 2026-03-18
+
+### P0 Mainline
+- Added `openclaw` as a real participant provider with hosted persona bindings persisted in SQLite
+- Added active-provider switching per slot and mixed-provider participant resolution
+- Added battle setup persistence and rematch APIs (`/api/arena/rematch`, `/api/arena/setups/[setupId]`)
+- Added dynamic Zhihu-derived topics alongside preset topics
+- Reworked `/arena` to support provider selection, OpenClaw binding, participant overrides, and rematch prefill
+- Reworked replay/history surfaces to expose `setupId`, provider snapshots, rematch links, and topic/provider metadata
+- Kept runtime behavior safe by making OpenClaw move generation optional and falling back when no runtime endpoint is configured
+
+### OpenClaw soul.md Import
+- Replaced manual OpenClaw persona form input with server-side import from `~/.openclaw/workspace/soul.md`
+- Added markdown parsing and fallback/default filling to map `soul.md` into `OpenClawBindingInput`
+- Added `OPENCLAW_WORKSPACE_DIR` env override for non-default workspace locations
+- Builder now triggers one-click import instead of uploading persona fields manually
+
+### OpenClaw Skill Push Registration
+- Added bind-code based remote registration flow for OpenClaw skills
+- Added `POST /api/openclaw/bind-code` and `POST /api/openclaw/register`
+- Builder now guides users through bind-code generation and waits for OpenClaw-side registration instead of relying on local file import
+- Registration payload now supports `displayId`, `avatarUrl`, and `agentVersion`
+- OpenClaw rating identity now prefers a stable `displayId` when available instead of per-binding ids

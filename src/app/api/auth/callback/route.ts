@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { setActiveParticipantProvider } from "@/lib/arena-session";
 import {
   exchangeCodeForSession,
   getSecondMeReturnTarget,
@@ -20,6 +21,10 @@ export async function GET(request: NextRequest) {
 
   try {
     await exchangeCodeForSession(code, slot);
+    await setActiveParticipantProvider({
+      provider: "secondme",
+      slot,
+    });
     const returnTo = await getSecondMeReturnTarget(slot);
     const url = new URL(returnTo, request.url);
 

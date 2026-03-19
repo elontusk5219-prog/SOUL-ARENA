@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
   if (disconnected.length > 0) {
     return NextResponse.json(
       {
-        message: "甲方和乙方都必须先连接 SecondMe",
+        message: "甲方和乙方都必须先完成来源连接",
         participants,
       },
       { status: 400 },
@@ -30,6 +30,6 @@ export async function POST(request: NextRequest) {
   }
 
   return NextResponse.json(
-    buildArenaPreview(body as ArenaBattleSetup, participants),
+    await buildArenaPreview(body as ArenaBattleSetup, participants),
   );
 }

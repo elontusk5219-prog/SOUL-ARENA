@@ -206,3 +206,96 @@
 ### `BattleSummary.competition`
 - 历史战报列表使用的轻量结算字段
 - 保持与 `BattlePackage.competition` 一致，但只用于列表摘要展示
+## 2026-03-18 P0 主线补充
+
+### `POST /api/openclaw/connect`
+- 请求体：
+  - `slot`
+- 行为：
+  - 读取 `~/.openclaw/workspace/soul.md`（或 `OPENCLAW_WORKSPACE_DIR/soul.md`）
+  - 解析 markdown 并保存该槽位的 openclaw persona 配置快照
+  - 把该槽位的 active provider 切换到 `openclaw`
+- 备注：
+  - 该接口现在仅作为 legacy/import fallback 保留，不再是默认主流程
+
+### `POST /api/openclaw/bind-code`
+- 请求体：
+  - `slot`
+- 返回：
+  - `bindCode`
+  - `expiresAt`
+  - `registerUrl`
+- 行为：
+  - 为当前浏览器 session 的指定槽位生成一次性绑定码
+  - 同时把该槽位 active provider 切换到 `openclaw`
+
+### `POST /api/openclaw/register`
+- 请求体：
+  - `bindCode`
+  - `displayName`
+  - `declaration`
+  - `rule`
+  - `taboo`
+  - `viewpoints`
+  - 可选：
+    - `displayId`
+    - `avatarUrl`
+    - `agentVersion`
+    - `tags`
+    - `memoryAnchors`
+    - `soulSeedTags`
+    - `archetype`
+    - `aura`
+    - `sourceLabel`
+- 行为：
+  - OpenClaw skill 通过绑定码完成远程注册
+  - 服务端保存 binding snapshot 并返回 participant 摘要
+
+### `GET /api/openclaw/profile`
+- 查询参数：
+  - `slot`
+  - 可选 `participantId`
+- 返回指定槽位当前或指定版本的 openclaw persona 摘要
+- builder 用它轮询 OpenClaw 注册是否已完成
+
+### `POST /api/participants`
+- 请求体：
+  - `slot`
+  - `provider`
+- 行为：
+  - 切换某个槽位当前使用的 provider
+
+### `POST /api/arena/rematch`
+- 请求体：
+  - `battleId`
+- 行为：
+  - 从 battle 派生一个新的 setup 模板
+  - 返回 `setup`
+
+### `GET /api/arena/setups/[setupId]`
+- 返回：
+  - `setup`
+  - `participants`
+- 用于 builder 回填 rematch 模板
+
+### `GET /api/arena/topics`
+- 现在返回两类题目：
+  - `preset`
+  - `zhihu_dynamic`
+- `TopicPreset` 现在携带：
+  - `source`
+  - 可选 `sourceMeta`
+
+### `POST /api/arena/build-preview`
+- 支持 mixed provider 输入
+- 支持：
+  - `topicSnapshot`
+  - `overrides`
+  - `originBattleId`
+
+### `POST /api/arena/battles`
+- 创建 battle 前先保存 setup
+- battle 现在会写入：
+  - `setupId`
+  - `originBattleId`
+  - `sourceMeta.participantSnapshots`

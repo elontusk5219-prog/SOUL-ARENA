@@ -41,9 +41,9 @@ const saveCache = (cacheKey: string, data: unknown, ttlMs: number) => {
   });
 };
 
-const signRequest = (timestamp: string, logId: string, extraInfo = "") => {
-  const signString = `app_key:${env.ZHIHU_APP_KEY}|ts:${timestamp}|logid:${logId}|extra_info:${extraInfo}`;
-  const signature = createHmac("sha256", env.ZHIHU_APP_SECRET)
+const signRequest = (timestamp: string, logId: string, appKey: string, appSecret: string, extraInfo = "") => {
+  const signString = `app_key:${appKey}|ts:${timestamp}|logid:${logId}|extra_info:${extraInfo}`;
+  const signature = createHmac("sha256", appSecret)
     .update(signString)
     .digest("base64");
 
@@ -87,9 +87,17 @@ type ZhihuFetchOptions = {
 export const zhihuFetchJson = async <T>(
   path: string,
   options: ZhihuFetchOptions = {},
-) => {
+): Promise<T | null> => {
+  if (!env.ZHIHU_APP_KEY || !env.ZHIHU_APP_SECRET || !env.ZHIHU_OPENAPI_BASE_URL) {
+    return null;
+  }
+
+  const appKey = env.ZHIHU_APP_KEY;
+  const appSecret = env.ZHIHU_APP_SECRET;
+  const baseUrl = env.ZHIHU_OPENAPI_BASE_URL;
+
   const method = options.method ?? "GET";
-  const url = new URL(path, env.ZHIHU_OPENAPI_BASE_URL);
+  const url = new URL(path, baseUrl);
 
   if (options.query) {
     for (const [key, value] of Object.entries(options.query)) {
@@ -115,12 +123,12 @@ export const zhihuFetchJson = async <T>(
 
   const timestamp = String(Math.floor(Date.now() / 1000));
   const logId = `soularena-${randomUUID()}`;
-  const auth = signRequest(timestamp, logId, options.extraInfo ?? "");
+  const auth = signRequest(timestamp, logId, appKey, appSecret, options.extraInfo ?? "");
   const response = await fetch(url, {
     method,
     headers: {
       "Content-Type": "application/json",
-      "X-App-Key": env.ZHIHU_APP_KEY,
+      "X-App-Key": appKey,
       "X-Extra-Info": auth.extraInfo,
       "X-Log-Id": auth.logId,
       "X-Sign": auth.signature,

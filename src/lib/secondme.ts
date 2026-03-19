@@ -182,6 +182,10 @@ export const createSecondMeAuthUrl = async (
   slot: SecondMeAuthSlot = "alpha",
   returnTo?: string,
 ) => {
+  if (!env.SECONDME_CLIENT_ID || !env.SECONDME_REDIRECT_URI) {
+    throw new Error("SecondMe not configured");
+  }
+
   const authSlot = toSlot(slot);
   const state = `${authSlot}:${randomUUID()}`;
   const cookieStore = await cookies();
@@ -212,6 +216,10 @@ export const exchangeCodeForSession = async (
   code: string,
   slot: SecondMeAuthSlot = "alpha",
 ) => {
+  if (!env.SECONDME_CLIENT_ID || !env.SECONDME_CLIENT_SECRET || !env.SECONDME_REDIRECT_URI) {
+    throw new Error("SecondMe not configured");
+  }
+
   const authSlot = toSlot(slot);
   const payload = await exchangeForm(
     joinUrl(env.SECONDME_API_BASE_URL, "/api/oauth/token/code"),
@@ -232,6 +240,10 @@ export const exchangeCodeForSession = async (
 export const refreshSecondMeSession = async (
   slot: SecondMeAuthSlot = "alpha",
 ) => {
+  if (!env.SECONDME_CLIENT_ID || !env.SECONDME_CLIENT_SECRET) {
+    throw new Error("SecondMe not configured");
+  }
+
   const authSlot = toSlot(slot);
   const cookieStore = await cookies();
   const refreshToken = cookieStore.get(refreshTokenCookie(authSlot))?.value;

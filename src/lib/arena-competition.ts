@@ -52,12 +52,14 @@ const toSlug = (value: string) =>
     .replace(/^-+|-+$/g, "");
 
 const buildCompetitorId = ({
+  displayId,
   displayName,
   participantId,
   provider,
   secondMeUserId,
   slot,
 }: {
+  displayId?: string | null;
   displayName: string;
   participantId?: string;
   provider: ArenaCompetitorIdentity["provider"];
@@ -65,9 +67,12 @@ const buildCompetitorId = ({
   slot?: ArenaCompetitorIdentity["slot"];
 }) => {
   const stablePart =
-    secondMeUserId?.trim() ||
-    participantId?.trim() ||
-    `${slot ?? "unknown"}:${toSlug(displayName) || "anonymous"}`;
+    provider === "openclaw"
+      ? displayId?.trim() ||
+        `${slot ?? "unknown"}:${toSlug(displayName) || "anonymous"}`
+      : secondMeUserId?.trim() ||
+        participantId?.trim() ||
+        `${slot ?? "unknown"}:${toSlug(displayName) || "anonymous"}`;
 
   return `${provider}:${stablePart}`;
 };
@@ -82,6 +87,7 @@ const createIdentityFromFighter = (
 
   return {
     competitorId: buildCompetitorId({
+      displayId: fighter.source.displayId,
       displayName: fighter.displayName,
       participantId: fighter.source.participantId,
       provider: fighter.source.provider,
@@ -104,6 +110,7 @@ const createIdentityFromParticipant = (
 
   return {
     competitorId: buildCompetitorId({
+      displayId: participant.displayId,
       displayName: participant.displayName,
       provider: participant.provider,
       secondMeUserId: participant.secondMeUserId,
@@ -266,9 +273,14 @@ const toBattleSummary = (
   defenderDisplayName: battle.defender.displayName,
   generationMode: battle.sourceMeta.generationMode,
   id: battle.id,
+  originBattleId: battle.originBattleId ?? battle.sourceMeta.originBattleId ?? null,
+  participantProviders: battle.participantRefs.map((participant) => participant.provider),
   playerDisplayName: battle.player.displayName,
   roomTitle: battle.roomTitle,
+  setupId: battle.setupId ?? battle.sourceMeta.setupId,
   topicId: battle.topic.id,
+  topicSource: battle.topic.source ?? battle.sourceMeta.topicSource,
+  topicTitle: battle.topic.title,
   winnerId: battle.winnerId,
 });
 

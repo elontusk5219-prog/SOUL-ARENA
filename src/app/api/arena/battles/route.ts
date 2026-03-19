@@ -3,9 +3,9 @@ import { createHash } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 
 import { getArenaBattlePackageWithCompetition } from "@/lib/arena-competition";
-import { resolveArenaParticipants } from "@/lib/arena-participants";
 import { createBattlePackage } from "@/lib/arena-engine";
-import { saveBattlePackage } from "@/lib/arena-store";
+import { resolveArenaParticipants } from "@/lib/arena-participants";
+import { saveBattlePackage, saveBattleSetup } from "@/lib/arena-store";
 import { fetchSecondMeJsonForSlot } from "@/lib/secondme";
 import type { ArenaBattleSetup, BattlePackage } from "@/lib/arena-types";
 
@@ -72,17 +72,36 @@ export async function POST(request: NextRequest) {
   if (disconnected.length > 0) {
     return NextResponse.json(
       {
-        message: "甲方和乙方都必须先连接 SecondMe",
+        message: "甲方和乙方都必须先完成来源连接",
         participants,
       },
       { status: 400 },
     );
   }
 
-  const battle = await createBattlePackage(body as ArenaBattleSetup, participants);
+  const setup = saveBattleSetup({
+    originBattleId: body.originBattleId ?? null,
+    overrides: body.overrides ?? {},
+    participants: body.participants,
+    topicId: body.topicId,
+    topicSnapshot: body.topicSnapshot,
+  });
+
+  const battle = await createBattlePackage(
+    {
+      ...body,
+      originBattleId: body.originBattleId ?? null,
+      overrides: body.overrides ?? {},
+      participants: body.participants,
+      setupId: setup.id,
+      topicId: body.topicId,
+      topicSnapshot: body.topicSnapshot,
+    } as ArenaBattleSetup,
+    participants,
+  );
+
   saveBattlePackage(battle);
-  const hydratedBattle =
-    getArenaBattlePackageWithCompetition(battle.id) ?? battle;
+  const hydratedBattle = getArenaBattlePackageWithCompetition(battle.id) ?? battle;
   await Promise.allSettled(
     body.participants
       .filter(
@@ -95,11 +114,11 @@ export async function POST(request: NextRequest) {
           participant.slot,
           "/api/secondme/agent_memory/ingest",
           {
-            method: "POST",
+            body: JSON.stringify(buildMemoryEvent(battle, participant.slot)),
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify(buildMemoryEvent(battle, participant.slot)),
+            method: "POST",
           },
         ),
       ),
